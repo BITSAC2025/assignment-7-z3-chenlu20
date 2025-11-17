@@ -221,47 +221,74 @@ void Z3Tests::test3()
 //     /// TODO: your code starts from here
 
 // }
+// void Z3Tests::test4()
+// {
+//     // int* p;
+//     expr p = getZ3Expr("p");
+//     // int* x;
+//     expr x = getZ3Expr("x");
+//     // int* y;
+//     expr y = getZ3Expr("y");
+//     // int a;
+//     expr a = getZ3Expr("a");
+//     // int b;
+//     expr b = getZ3Expr("b");
+    
+//     // p = malloc;
+//     addToSolver(p == getMemObjAddress("malloc"));
+    
+//     // x = &p[0];  (p的第0个元素的地址)
+//     addToSolver(x == getGepObjAddress(p, 0));
+    
+//     // y = &p[1];  (p的第1个元素的地址)
+//     addToSolver(y == getGepObjAddress(p, 1));
+    
+//     // *x = 10;
+//     storeValue(x, getZ3Expr(10));
+    
+//     // *y = 11;
+//     storeValue(y, getZ3Expr(11));
+    
+//     // a = *x;
+//     addToSolver(a == loadValue(x));
+    
+//     // b = *y;
+//     addToSolver(b == loadValue(y));
+    
+//     // assert((a + b)>20);
+//     addToSolver((a + b) > getZ3Expr(20));
+    
+//     printExprValues();
+//     std::cout << solver.check() << std::endl;
+// }
 void Z3Tests::test4()
 {
-    // int* p;
     expr p = getZ3Expr("p");
-    // int* x;
     expr x = getZ3Expr("x");
-    // int* y;
     expr y = getZ3Expr("y");
-    // int a;
     expr a = getZ3Expr("a");
-    // int b;
     expr b = getZ3Expr("b");
     
-    // p = malloc;
     addToSolver(p == getMemObjAddress("malloc"));
     
-    // x = &p[0];  (p的第0个元素的地址)
+    // x = &p[0]; y = &p[1];
     addToSolver(x == getGepObjAddress(p, 0));
-    
-    // y = &p[1];  (p的第1个元素的地址)
     addToSolver(y == getGepObjAddress(p, 1));
     
-    // *x = 10;
+    // *x = 10; *y = 11;
     storeValue(x, getZ3Expr(10));
-    
-    // *y = 11;
     storeValue(y, getZ3Expr(11));
     
-    // a = *x;
+    // a = *x; b = *y;
     addToSolver(a == loadValue(x));
-    
-    // b = *y;
     addToSolver(b == loadValue(y));
     
     // assert((a + b)>20);
-    addToSolver((a + b) > getZ3Expr(20));
+    addToSolver((a + b) > getZ3Expr(20));  // 这里已经是对的
     
     printExprValues();
     std::cout << solver.check() << std::endl;
 }
-
 /*
     // Branches
 
@@ -282,9 +309,33 @@ int main(int argv) {
 //     /// TODO: your code starts from here
 
 // }
+// void Z3Tests::test5()
+// {
+//     // int a, b, b1;
+//     expr a = getZ3Expr("a");
+//     expr b = getZ3Expr("b");
+//     expr b1 = getZ3Expr("b1");
+//     expr argv = getZ3Expr("argv");
+    
+//     // a = argv + 1;
+//     addToSolver(a == argv + 1);
+    
+//     // b = 5;
+//     // if(a > 10) b = a;
+//     // 使用ite(条件, then值, else值)
+//     addToSolver(b == ite(a > getZ3Expr(10), a, getZ3Expr(5)));
+    
+//     // b1 = b;
+//     addToSolver(b1 == b);
+    
+//     // assert(b1 >= 5);
+//     addToSolver(b1 >= getZ3Expr(5));
+    
+//     printExprValues();
+//     std::cout << solver.check() << std::endl;
+// }
 void Z3Tests::test5()
 {
-    // int a, b, b1;
     expr a = getZ3Expr("a");
     expr b = getZ3Expr("b");
     expr b1 = getZ3Expr("b1");
@@ -293,10 +344,12 @@ void Z3Tests::test5()
     // a = argv + 1;
     addToSolver(a == argv + 1);
     
-    // b = 5;
-    // if(a > 10) b = a;
-    // 使用ite(条件, then值, else值)
-    addToSolver(b == ite(a > getZ3Expr(10), a, getZ3Expr(5)));
+    // 原代码的问题：b在if之前就赋值了5，不应该只用ite
+    // 应该先设置初始值
+    expr b_init = getZ3Expr(5);  // b的初始值是5
+    
+    // if(a > 10) b = a; 否则b保持原值5
+    addToSolver(b == ite(a > getZ3Expr(10), a, b_init));
     
     // b1 = b;
     addToSolver(b1 == b);
@@ -307,7 +360,6 @@ void Z3Tests::test5()
     printExprValues();
     std::cout << solver.check() << std::endl;
 }
-
 /*
 // Compare and pointers
 int main() {
@@ -421,29 +473,63 @@ void Z3Tests::test7()
 //     /// TODO: your code starts from here
 
 // }
+// void Z3Tests::test8()
+// {
+//     // int arr[2] = {0, 1};
+//     expr arr = getZ3Expr("arr");
+//     expr a = getZ3Expr("a");
+//     expr p = getZ3Expr("p");
+    
+//     // arr是数组的基地址
+//     addToSolver(arr == getMemObjAddress("arr"));
+    
+//     // arr[0] = 0;
+//     storeValue(getGepObjAddress(arr, 0), getZ3Expr(0));
+    
+//     // arr[1] = 1;
+//     storeValue(getGepObjAddress(arr, 1), getZ3Expr(1));
+    
+//     // a = 10;
+//     addToSolver(a == getZ3Expr(10));
+    
+//     // if (a > 5) { p = &arr[0]; } else { p = &arr[1]; }
+//     addToSolver(p == ite(a > getZ3Expr(5), 
+//                          getGepObjAddress(arr, 0), 
+//                          getGepObjAddress(arr, 1)));
+    
+//     // assert(*p == 0);
+//     addToSolver(loadValue(p) == getZ3Expr(0));
+    
+//     printExprValues();
+//     std::cout << solver.check() << std::endl;
+// }
+
 void Z3Tests::test8()
 {
-    // int arr[2] = {0, 1};
     expr arr = getZ3Expr("arr");
     expr a = getZ3Expr("a");
     expr p = getZ3Expr("p");
+    expr arr0 = getZ3Expr("arr0");  // 新增：数组第0个元素的地址
+    expr arr1 = getZ3Expr("arr1");  // 新增：数组第1个元素的地址
     
     // arr是数组的基地址
     addToSolver(arr == getMemObjAddress("arr"));
     
+    // 先将数组元素地址赋给变量
+    addToSolver(arr0 == getGepObjAddress(arr, 0));
+    addToSolver(arr1 == getGepObjAddress(arr, 1));
+    
     // arr[0] = 0;
-    storeValue(getGepObjAddress(arr, 0), getZ3Expr(0));
+    storeValue(arr0, getZ3Expr(0));
     
     // arr[1] = 1;
-    storeValue(getGepObjAddress(arr, 1), getZ3Expr(1));
+    storeValue(arr1, getZ3Expr(1));
     
     // a = 10;
     addToSolver(a == getZ3Expr(10));
     
     // if (a > 5) { p = &arr[0]; } else { p = &arr[1]; }
-    addToSolver(p == ite(a > getZ3Expr(5), 
-                         getGepObjAddress(arr, 0), 
-                         getGepObjAddress(arr, 1)));
+    addToSolver(p == ite(a > getZ3Expr(5), arr0, arr1));
     
     // assert(*p == 0);
     addToSolver(loadValue(p) == getZ3Expr(0));
@@ -451,7 +537,6 @@ void Z3Tests::test8()
     printExprValues();
     std::cout << solver.check() << std::endl;
 }
-
 /*
     // Struct and pointers
 
