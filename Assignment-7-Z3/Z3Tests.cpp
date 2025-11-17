@@ -341,20 +341,12 @@ void Z3Tests::test5()
     expr b1 = getZ3Expr("b1");
     expr argv = getZ3Expr("argv");
     
-    // a = argv + 1;
     addToSolver(a == argv + 1);
     
-    // 原代码的问题：b在if之前就赋值了5，不应该只用ite
-    // 应该先设置初始值
-    expr b_init = getZ3Expr(5);  // b的初始值是5
+    // 直接使用常量,不要中间变量
+    addToSolver(b == ite(a > getZ3Expr(10), a, getZ3Expr(5)));
     
-    // if(a > 10) b = a; 否则b保持原值5
-    addToSolver(b == ite(a > getZ3Expr(10), a, b_init));
-    
-    // b1 = b;
     addToSolver(b1 == b);
-    
-    // assert(b1 >= 5);
     addToSolver(b1 >= getZ3Expr(5));
     
     printExprValues();
@@ -504,32 +496,30 @@ void Z3Tests::test7()
 //     std::cout << solver.check() << std::endl;
 // }
 
-void Z3Tests::test8()
+
+  void Z3Tests::test8()
 {
     expr arr = getZ3Expr("arr");
     expr a = getZ3Expr("a");
     expr p = getZ3Expr("p");
-    expr arr0 = getZ3Expr("arr0");  // 新增：数组第0个元素的地址
-    expr arr1 = getZ3Expr("arr1");  // 新增：数组第1个元素的地址
     
     // arr是数组的基地址
     addToSolver(arr == getMemObjAddress("arr"));
     
-    // 先将数组元素地址赋给变量
-    addToSolver(arr0 == getGepObjAddress(arr, 0));
-    addToSolver(arr1 == getGepObjAddress(arr, 1));
-    
+    // 直接用getGepObjAddress,不要中间变量
     // arr[0] = 0;
-    storeValue(arr0, getZ3Expr(0));
+    storeValue(getGepObjAddress(arr, 0), getZ3Expr(0));
     
     // arr[1] = 1;
-    storeValue(arr1, getZ3Expr(1));
+    storeValue(getGepObjAddress(arr, 1), getZ3Expr(1));
     
     // a = 10;
     addToSolver(a == getZ3Expr(10));
     
     // if (a > 5) { p = &arr[0]; } else { p = &arr[1]; }
-    addToSolver(p == ite(a > getZ3Expr(5), arr0, arr1));
+    addToSolver(p == ite(a > getZ3Expr(5), 
+                         getGepObjAddress(arr, 0), 
+                         getGepObjAddress(arr, 1)));
     
     // assert(*p == 0);
     addToSolver(loadValue(p) == getZ3Expr(0));
